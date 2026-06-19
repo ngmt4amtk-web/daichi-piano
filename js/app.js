@@ -123,7 +123,9 @@
   // ====== 再生エンジン ======
   function beatDur() { return 60 / state.tempo; }
   function scope() {
-    if (state.view === 'measure' || state.loopMeasure) {
+    // loopMeasure(その小節をくりかえす)が明示ONの時だけ小節に限定。
+    // 一小節モードは「表示の拡大」だけで、再生/まつは曲全体を進む（表示は自動追従）。
+    if (state.loopMeasure) {
       var bpm = state.song.beatsPerMeasure;
       return { start: (state.measureIndex - 1) * bpm, end: state.measureIndex * bpm };
     }
@@ -177,9 +179,17 @@
       if (now < startTime) beat = sc.start; // カウントイン中
       // ループ末尾
       if (beat >= sc.end) {
-        if (state.loopMeasure || (state.view === 'measure' && repeatOn())) {
+        if (state.loopMeasure) {
           startTime = now; fired = {}; beat = sc.start;
         } else { onComplete(); stop(); return; }
+      }
+      // 一小節モード: 再生位置の小節へ表示を自動追従（曲全体を流す）
+      if (state.view === 'measure' && !state.loopMeasure) {
+        var curM = Math.min(state.song.measureCount, Math.floor(beat / bpm + 1e-6) + 1);
+        if (curM !== state.measureIndex) {
+          state.measureIndex = curM; renderScore();
+          $('measureLabel').textContent = state.measureIndex + ' / ' + state.song.measureCount;
+        }
       }
       // ハイライト
       DP.render.highlight(idx, function (ref) {
@@ -275,6 +285,7 @@
     if (!waitCtx) return;
     var st = waitCtx.steps[waitCtx.i];
     if (!st) { if (!staticOnly) onComplete(); stop(); return; }
+    waitCtx.armed = true; lastPitchMidi = null; pitchHold = 0;
     // ハイライト＋鍵盤光
     DP.render.highlight(idx, function (ref) { return Math.abs(ref.startBeat - st.beat) < 1e-3 && practicingHands().indexOf(ref.hand) >= 0; });
     if (kb) { kb.allOff(); kb.lightNotes(st.midis); }
@@ -290,15 +301,33 @@
     return st.midis.map(function (m) { return ((m % 12) + 12) % 12; });
   }
   function tryAdvanceByPitch(midi) {
-    if (state.playMode !== 'wait' || !waitCtx) return;
+    if (state.playMode !== 'wait' || !waitCtx || !waitCtx.armed) return;
     var pc = ((midi % 12) + 12) % 12;
-    if (expectedPCs().indexOf(pc) >= 0) advanceStep();
+    if (expectedPCs().indexOf(pc) >= 0) { waitCtx.armed = false; advanceStep(); }
   }
   var lastPitchMidi = null, pitchHold = 0;
   function onMicPitch(midi) {
-    if (midi == null) { lastPitchMidi = null; pitchHold = 0; return; }
+    var b = $('btnMic');
+    if (midi == null) { lastPitchMidi = null; pitchHold = 0; if (b) b.classList.remove('listening'); return; }
+    if (b) b.classList.add('listening');
     if (midi === lastPitchMidi) { pitchHold++; } else { lastPitchMidi = midi; pitchHold = 1; }
-    if (pitchHold === 2) tryAdvanceByPitch(midi); // 連打ズル防止: 2フレーム安定で1回
+    if (pitchHold >= 2) tryAdvanceByPitch(midi); // 2フレーム安定で（armedが1ステップ1回を保証）
+  }
+  function setMic(on) {
+    state.micOn = on;
+    var b = $('btnMic');
+    if ($('micOn')) $('micOn').checked = on;
+    if (on) {
+      DP.audio.unlock();
+      DP.pitch.start(onMicPitch).then(function (ok) {
+        if (!ok) { state.micOn = false; if (b) b.classList.remove('active', 'listening'); if ($('micOn')) $('micOn').checked = false;
+          alert('マイクを使えませんでした。\nSafariのタブで開き、マイクの許可を「許可」にしてね。'); }
+        else if (b) b.classList.add('active');
+      });
+    } else {
+      DP.pitch.stop();
+      if (b) b.classList.remove('active', 'listening');
+    }
   }
   function advanceStep() {
     if (!waitCtx) return;
@@ -307,7 +336,7 @@
     if (state.reward.soundOn) DP.audio.correctBlip();
     waitCtx.i++;
     if (waitCtx.i >= waitCtx.steps.length) {
-      if (state.loopMeasure || (state.view === 'measure' && repeatOn())) { waitCtx.i = 0; setTimeout(showStep, 300); }
+      if (state.loopMeasure) { waitCtx.i = 0; setTimeout(showStep, 300); }
       else { onComplete(); stop(); }
       return;
     }
@@ -385,6 +414,7 @@
     corner.addEventListener('pointerdown', down);
     corner.addEventListener('pointerup', up);
     corner.addEventListener('pointerleave', up);
+    $('gearBtn').addEventListener('click', function () { $('panel').classList.toggle('open'); });
     $('panelClose').addEventListener('click', function () { $('panel').classList.remove('open'); });
     // PC: gキーでも開く
     document.addEventListener('keydown', function (e) { if (e.key === 'g') $('panel').classList.toggle('open'); });
@@ -417,7 +447,8 @@
     $('visLH').addEventListener('change', function () { state.hands.LH = this.checked; stop(); renderScore(); });
 
     $('falling').addEventListener('change', function () { state.falling = this.checked; kb.setFallingHeight(state.falling ? 150 : 0); });
-    $('micOn').addEventListener('change', function () { state.micOn = this.checked; if (!state.micOn) DP.pitch.stop(); else if (transport.playing && state.playMode === 'wait') DP.pitch.start(onMicPitch); });
+    $('micOn').addEventListener('change', function () { setMic(this.checked); });
+    $('btnMic').addEventListener('click', function () { setMic(!state.micOn); });
     $('kana').addEventListener('change', function () { state.kana = this.checked; stop(); renderScore(); });
     $('soundOn').addEventListener('change', function () { state.reward.soundOn = this.checked; });
     $('celebrateOn').addEventListener('change', function () { state.reward.celebrateOn = this.checked; });
@@ -428,7 +459,7 @@
     $('rwLively').addEventListener('click', function () { state.reward.intensity = 'lively'; updateUI(); });
 
     $('tempo').addEventListener('input', function () { state.tempo = parseInt(this.value, 10); $('tempoVal').textContent = state.tempo; });
-    $('loopMeasure');
+    $('loopMeasure').addEventListener('change', function () { state.loopMeasure = this.checked; stop(); primeWaitOrGuide(); });
 
     $('songList').addEventListener('change', function () { state.songIndex = parseInt(this.value, 10); stop(); renderAll(); });
     $('importBtn').addEventListener('click', importSong);

@@ -21,8 +21,12 @@ body{display:flex;flex-direction:column;}
   padding:6px 14px;background:var(--panel-bg);border-bottom:2px solid var(--line);position:relative;}
 .song-title{font-size:20px;font-weight:800;}
 .copyright{font-size:11px;color:#9aa1ab;margin-left:10px;}
+.top-right{display:flex;align-items:center;gap:12px;}
 .stars{font-size:20px;font-weight:800;color:#d98a00;}
-.teacher-corner{position:absolute;top:0;right:0;width:64px;height:64px;}
+.gear-btn{height:40px;padding:0 14px;border:2px solid var(--line);background:#fff;border-radius:12px;
+  font-size:15px;font-weight:700;color:#6b7178;cursor:pointer;box-shadow:var(--shadow);}
+.gear-btn:active{transform:translateY(1px);}
+.teacher-corner{position:absolute;top:0;right:0;width:56px;height:56px;}
 
 /* ステージ */
 .stage{flex:1;display:flex;flex-direction:column;min-height:0;padding:6px 10px;gap:4px;}
@@ -52,6 +56,9 @@ body{display:flex;flex-direction:column;}
 .kb-btn.play.playing{background:#ffd9d9;border-color:#e58a8a;color:#b22;}
 .kb-btn.next{background:#e7f0fb;border-color:#a9c9ec;color:#1b75bc;}
 .kb-btn.hand{background:#f0ecf7;}
+.kb-btn.mic{background:#fff;}
+.kb-btn.mic.active{background:#ffe1e1;border-color:#e58a8a;}
+.kb-btn.mic.listening{background:#ffd0d0;border-color:#e05a5a;box-shadow:0 0 0 3px rgba(224,90,90,.35);}
 .sep{width:2px;height:46px;background:var(--line);margin:0 4px;flex-shrink:0;}
 .measure-nav{display:flex;align-items:center;gap:6px;font-size:18px;font-weight:800;}
 #measureLabel{min-width:54px;text-align:center;}
