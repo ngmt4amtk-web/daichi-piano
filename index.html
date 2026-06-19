@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="だいちピアノ">
+<meta name="theme-color" content="#1b75bc">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="styles.css">
+<title>だいちの木 ピアノ</title>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="title-wrap">
+    <span id="songTitle" class="song-title">…</span>
+    <span id="copyright" class="copyright"></span>
+  </div>
+  <div class="top-right">
+    <span id="starCount" class="stars">⭐ 0</span>
+  </div>
+  <div id="teacherCorner" class="teacher-corner" title="長押しで先生メニュー"></div>
+</header>
+
+<main class="stage">
+  <div id="score" class="score"></div>
+  <div id="keyboard" class="keyboard"></div>
+</main>
+
+<!-- 子ども用バー（常時表示） -->
+<nav class="kidbar">
+  <button id="btnPlay" class="kb-btn big play">▶</button>
+  <button id="btnStop" class="kb-btn">■</button>
+  <button id="btnNext" class="kb-btn big next">つぎ ▶</button>
+  <div class="sep"></div>
+  <button id="handRH" class="kb-btn hand">みぎ</button>
+  <button id="handLH" class="kb-btn hand">ひだり</button>
+  <button id="handBoth" class="kb-btn hand active">りょうて</button>
+  <div class="sep"></div>
+  <button id="viewFull" class="kb-btn view active">ぜんたい</button>
+  <button id="viewMeasure" class="kb-btn view">1しょうせつ</button>
+  <div id="measureNav" class="measure-nav" style="display:none">
+    <button id="mPrev" class="kb-btn">◀</button>
+    <span id="measureLabel">1 / 1</span>
+    <button id="mNext" class="kb-btn">▶</button>
+  </div>
+</nav>
+
+<!-- 先生ゾーン（隅長押しで開く） -->
+<aside id="panel" class="panel">
+  <div class="panel-head">
+    <strong>先生メニュー</strong>
+    <button id="panelClose" class="x">閉じる ✕</button>
+  </div>
+
+  <section class="panel-sec">
+    <h3>こども</h3>
+    <div class="row">
+      <button id="prof_wakana" class="chip">わかな</button>
+      <button id="prof_mikoto" class="chip">みこと</button>
+      <button id="prof_taichi" class="chip">たいち</button>
+      <button id="prof_kaho" class="chip">かほ</button>
+    </div>
+  </section>
+
+  <section class="panel-sec">
+    <h3>きょく</h3>
+    <select id="songList" class="select"></select>
+  </section>
+
+  <section class="panel-sec">
+    <h3>ひきかた（モード）</h3>
+    <div class="row">
+      <button id="pmDemo" class="chip">おてほん</button>
+      <button id="pmGuide" class="chip">いっしょ</button>
+      <button id="pmWait" class="chip active">まつ</button>
+    </div>
+    <label class="line"><input type="checkbox" id="loopMeasure"> その小節をくりかえす</label>
+    <label class="line"><input type="checkbox" id="micOn"> マイクで音をきく（電子キーボード/声で次へ）</label>
+    <div class="line">テンポ <input type="range" id="tempo" min="40" max="160" value="88"> <span id="tempoVal">88</span></div>
+  </section>
+
+  <section class="panel-sec">
+    <h3>よみの足場（手ごとに独立）</h3>
+    <table class="layer-table">
+      <tr><th></th><th>音名(ドレミ)</th><th>色</th><th>ゆびばん</th><th>表示</th></tr>
+      <tr><td>みぎて</td>
+        <td><input type="checkbox" id="rhName"></td>
+        <td><input type="checkbox" id="rhColor"></td>
+        <td><input type="checkbox" id="rhFinger"></td>
+        <td><input type="checkbox" id="visRH" checked></td></tr>
+      <tr><td>ひだりて</td>
+        <td><input type="checkbox" id="lhName"></td>
+        <td><input type="checkbox" id="lhColor"></td>
+        <td><input type="checkbox" id="lhFinger"></td>
+        <td><input type="checkbox" id="visLH" checked></td></tr>
+    </table>
+    <label class="line"><input type="checkbox" id="kana" checked> 音名をドレミで（オフ=CDE）</label>
+    <label class="line"><input type="checkbox" id="falling"> 光ナビ（落ちてくる音・鍵盤が光る）</label>
+  </section>
+
+  <section class="panel-sec">
+    <h3>ごほうび</h3>
+    <div class="row">
+      <button id="rwQuiet" class="chip">しずか</button>
+      <button id="rwNormal" class="chip active">ふつう</button>
+      <button id="rwLively" class="chip">にぎやか</button>
+    </div>
+    <label class="line"><input type="checkbox" id="soundOn" checked> 音を鳴らす</label>
+    <label class="line"><input type="checkbox" id="celebrateOn" checked> できた！演出</label>
+    <label class="line"><input type="checkbox" id="softAttack"> やわらかい音（感覚過敏むけ）</label>
+  </section>
+
+  <section class="panel-sec">
+    <h3>きょくを取り込む（だいち記譜）</h3>
+    <p class="hint">例: <code>title: れんしゅう / RH: C4q D4q E4q C4q / LH: [C3G3]h [C3G3]h</code><br>
+      音価 w=4 h=2 q=1 e=8分、和音 [C3E3G3]、付点は h. のように。著作権曲もここに打てば端末内だけに保存（配布物に含めない）。</p>
+    <textarea id="importText" class="import" placeholder="title: きょくめい&#10;key: C&#10;time: 4/4&#10;tempo: 90&#10;RH: C4q D4q E4q F4q | G4h G4h&#10;LH: [C3G3]h [C3G3]h | [G2D3]h [C3G3]h"></textarea>
+    <button id="importBtn" class="chip wide">取り込む</button>
+  </section>
+
+  <section class="panel-sec">
+    <p class="credit">合成音のみ・歌詞非収録・MIDI不使用（iOS Safari非対応のため）。色はBoomwhackers系の近似。完全無料・サーバ不要。</p>
+  </section>
+</aside>
+
+<div id="reward" class="reward">
+  <div class="reward-inner">
+    <div class="reward-text">できた！</div>
+    <div class="reward-sub"></div>
+  </div>
+</div>
+
+<script src="js/theory.js"></script>
+<script src="js/songs.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/pitch.js"></script>
+<script src="js/render.js"></script>
+<script src="js/keyboard.js"></script>
+<script src="js/app.js"></script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function(){}); });
+}
+</script>
+</body>
+</html>

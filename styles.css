@@ -1,0 +1,118 @@
+/* styles.css — だいちの木ピアノ
+ * SEN配慮: オフホワイト地・大きなタップ標的・高コントラスト・横向き前提・動き控えめ */
+:root{
+  --bg:#f4f1ea;          /* オフホワイト（純白回避） */
+  --panel-bg:#fbfaf6;
+  --ink:#2a2d33;
+  --line:#c2c8d0;
+  --rh:#1b75bc; --lh:#7b3f98;
+  --accent:#0a7d4d; --accent2:#e8202a;
+  --btn:#ffffff; --btn-active:#ffe9a8;
+  --shadow:0 2px 8px rgba(0,0,0,.10);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);
+  font-family:"UD デジタル 教科書体 NK-R","UD Digi Kyokasho NK-R","Hiragino Maru Gothic ProN","Yu Gothic UI",system-ui,sans-serif;
+  -webkit-user-select:none;user-select:none;overflow:hidden;}
+body{display:flex;flex-direction:column;}
+
+/* 上バー */
+.topbar{display:flex;align-items:center;justify-content:space-between;
+  padding:6px 14px;background:var(--panel-bg);border-bottom:2px solid var(--line);position:relative;}
+.song-title{font-size:20px;font-weight:800;}
+.copyright{font-size:11px;color:#9aa1ab;margin-left:10px;}
+.stars{font-size:20px;font-weight:800;color:#d98a00;}
+.teacher-corner{position:absolute;top:0;right:0;width:64px;height:64px;}
+
+/* ステージ */
+.stage{flex:1;display:flex;flex-direction:column;min-height:0;padding:6px 10px;gap:4px;}
+.score{flex:1;min-height:0;overflow:auto;background:#fff;border:2px solid var(--line);border-radius:14px;padding:6px;}
+.score-svg{display:block;}
+.keyboard{flex-shrink:0;}
+.kb-wrap{position:relative;}
+.kb-falling{display:block;width:100%;}
+.kb-host{width:100%;}
+.kb-svg .key{cursor:pointer;transition:fill .05s;}
+.kb-svg .key.lit{filter:drop-shadow(0 0 6px rgba(0,0,0,.25));}
+
+/* 音符ハイライト */
+.note.hl .notehead{stroke:#ffb000;stroke-width:4.5;filter:drop-shadow(0 0 6px rgba(255,176,0,.7));}
+.note{transition:none;}
+
+/* 子どもバー */
+.kidbar{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--panel-bg);
+  border-top:2px solid var(--line);overflow-x:auto;}
+.kb-btn{min-width:76px;height:64px;border:2px solid var(--line);background:var(--btn);
+  border-radius:14px;font-size:20px;font-weight:800;color:var(--ink);box-shadow:var(--shadow);
+  cursor:pointer;flex-shrink:0;padding:0 14px;}
+.kb-btn:active{transform:translateY(1px);}
+.kb-btn.active{background:var(--btn-active);border-color:#e0b94a;}
+.kb-btn.big{min-width:96px;font-size:24px;}
+.kb-btn.play{background:#dff3e6;border-color:#9bd6b3;color:#0a7d4d;font-size:30px;}
+.kb-btn.play.playing{background:#ffd9d9;border-color:#e58a8a;color:#b22;}
+.kb-btn.next{background:#e7f0fb;border-color:#a9c9ec;color:#1b75bc;}
+.kb-btn.hand{background:#f0ecf7;}
+.sep{width:2px;height:46px;background:var(--line);margin:0 4px;flex-shrink:0;}
+.measure-nav{display:flex;align-items:center;gap:6px;font-size:18px;font-weight:800;}
+#measureLabel{min-width:54px;text-align:center;}
+
+/* 先生パネル */
+.panel{position:fixed;top:0;right:0;height:100%;width:min(440px,92vw);background:var(--panel-bg);
+  box-shadow:-4px 0 20px rgba(0,0,0,.2);transform:translateX(102%);transition:transform .25s;
+  overflow-y:auto;z-index:50;padding:14px 16px 60px;}
+.panel.open{transform:translateX(0);}
+.panel-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;
+  position:sticky;top:-14px;background:var(--panel-bg);padding:8px 0;z-index:1;}
+.panel-head strong{font-size:20px;}
+.x{height:44px;border:2px solid var(--line);background:#fff;border-radius:10px;font-weight:700;padding:0 14px;}
+.panel-sec{border-top:1px solid var(--line);padding:12px 0;}
+.panel-sec h3{margin:0 0 8px;font-size:15px;color:#6b7178;}
+.row{display:flex;flex-wrap:wrap;gap:8px;}
+.chip{min-height:48px;padding:0 16px;border:2px solid var(--line);background:#fff;border-radius:12px;
+  font-size:16px;font-weight:700;cursor:pointer;}
+.chip.active{background:var(--btn-active);border-color:#e0b94a;}
+.chip.wide{width:100%;margin-top:8px;background:#dff3e6;border-color:#9bd6b3;}
+.line{display:flex;align-items:center;gap:8px;margin:8px 0;font-size:15px;}
+.line input[type=range]{flex:1;}
+.select{width:100%;height:48px;font-size:16px;border:2px solid var(--line);border-radius:12px;background:#fff;padding:0 10px;}
+.layer-table{width:100%;border-collapse:collapse;font-size:14px;text-align:center;}
+.layer-table th,.layer-table td{padding:8px 4px;border-bottom:1px solid var(--line);}
+.layer-table td:first-child{font-weight:700;text-align:left;}
+.layer-table input[type=checkbox]{width:26px;height:26px;}
+.line input[type=checkbox]{width:24px;height:24px;}
+.import{width:100%;height:96px;font-size:14px;border:2px solid var(--line);border-radius:12px;padding:8px;font-family:monospace;}
+.hint{font-size:12px;color:#6b7178;line-height:1.5;}
+.hint code{background:#eee;padding:1px 4px;border-radius:4px;}
+.credit{font-size:11px;color:#9aa1ab;line-height:1.5;}
+
+/* ごほうび */
+.reward{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
+  pointer-events:none;opacity:0;z-index:80;transition:opacity .2s;}
+.reward.show{opacity:1;}
+.reward-inner{background:rgba(255,255,255,.94);border:6px solid #ffd34d;border-radius:30px;
+  padding:30px 56px;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,.25);}
+.reward-text{font-size:48px;font-weight:900;color:#e8202a;}
+.reward-sub{font-size:34px;margin-top:8px;}
+
+/* タブレット小〜スマホ: ボタンを折返して全部見せる */
+@media (max-width:820px){
+  .song-title{font-size:17px;}
+  .copyright{display:none;}
+  .stage{padding:4px 6px;}
+  .kidbar{flex-wrap:wrap;justify-content:center;gap:6px;padding:6px 8px;}
+  .kb-btn{min-width:58px;height:52px;font-size:16px;padding:0 10px;}
+  .kb-btn.big{min-width:78px;font-size:18px;}
+  .kb-btn.play{font-size:24px;}
+  .sep{display:none;}
+}
+/* iPhone */
+@media (max-width:480px){
+  .kb-btn{min-width:52px;height:48px;font-size:15px;border-radius:11px;}
+  .kb-btn.big{min-width:66px;font-size:16px;}
+  .panel{width:100vw;}
+  .reward-inner{padding:22px 34px;}
+  .reward-text{font-size:36px;}
+  .reward-sub{font-size:26px;}
+  .kb-name{display:none;}
+}
+@media (prefers-reduced-motion: reduce){ *{transition:none !important;} }

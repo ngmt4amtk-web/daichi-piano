@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="96" fill="#1b75bc"/>
+  <!-- 鍵盤 -->
+  <g transform="translate(56 300)">
+    <rect x="0" y="0" width="400" height="150" rx="14" fill="#fbfaf6"/>
+    <g stroke="#c2c8d0" stroke-width="3">
+      <line x1="57" y1="6" x2="57" y2="144"/><line x1="114" y1="6" x2="114" y2="144"/>
+      <line x1="171" y1="6" x2="171" y2="144"/><line x1="228" y1="6" x2="228" y2="144"/>
+      <line x1="285" y1="6" x2="285" y2="144"/><line x1="342" y1="6" x2="342" y2="144"/>
+    </g>
+    <g fill="#2a2d33">
+      <rect x="40" y="6" width="34" height="92" rx="5"/><rect x="97" y="6" width="34" height="92" rx="5"/>
+      <rect x="211" y="6" width="34" height="92" rx="5"/><rect x="268" y="6" width="34" height="92" rx="5"/>
+      <rect x="325" y="6" width="34" height="92" rx="5"/>
+    </g>
+  </g>
+  <!-- 色の音符（ドレミ） -->
+  <g stroke="#ffffff" stroke-width="6">
+    <circle cx="150" cy="170" r="52" fill="#E8202A"/>
+    <circle cx="262" cy="130" r="52" fill="#FFD400"/>
+    <circle cx="374" cy="180" r="52" fill="#1B75BC"/>
+  </g>
+  <g fill="#ffffff" font-family="sans-serif" font-weight="800" font-size="46" text-anchor="middle">
+    <text x="150" y="186">ド</text>
+    <text x="262" y="146" fill="#2a2d33">ミ</text>
+    <text x="374" y="196">ソ</text>
+  </g>
+</svg>
