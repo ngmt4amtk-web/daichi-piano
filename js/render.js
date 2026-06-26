@@ -30,7 +30,9 @@
     var mode = opt.mode || 'full';
     var W = container.clientWidth || 900;
 
-    var gap = mode === 'measure' ? 26 : 16;     // 五線間隔
+    // 一小節モードは楽譜の高さをボックスにフィットさせる(余白を作らない・音符を大きく)
+    var availH = container.clientHeight || 360;
+    var gap = mode === 'measure' ? Math.max(22, Math.min(44, availH / 15)) : 16;
     var R = gap * 0.62;                          // 符頭半径
     var leftLabel = mode === 'measure' ? 84 : 58;
     var sidePad = 12;
@@ -50,9 +52,9 @@
     for (var r = 0; r < measuresToDraw.length; r += measuresPerRow)
       rows.push(measuresToDraw.slice(r, r + measuresPerRow));
 
-    var systemH = 11 * gap;     // 五線群の高さ
-    var topPad = 3.2 * gap;     // 上の余白(指番号/加線)
-    var rowGap = 3.4 * gap;
+    var systemH = (mode === 'measure' ? 10.6 : 11) * gap;  // 五線群の高さ
+    var topPad = 1.8 * gap;     // 上の余白(指番号/加線)を圧縮
+    var rowGap = (mode === 'measure' ? 1.5 : 2.4) * gap;   // 下の余白
     var totalH = rows.length * (systemH + rowGap) + topPad;
 
     var svg = el('svg', {

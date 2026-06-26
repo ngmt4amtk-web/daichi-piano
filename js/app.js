@@ -64,7 +64,6 @@
   }
 
   function renderScore() {
-    $('score').classList.toggle('centered', state.view === 'measure');
     idx = DP.render.draw($('score'), state.song, {
       hands: state.hands, layers: state.layers, kana: state.kana,
       mode: state.view, measureIndex: state.measureIndex
@@ -84,8 +83,8 @@
     state.song = allSongs()[state.songIndex];
     $('songTitle').textContent = state.song.title;
     $('copyright').textContent = state.song.copyright || '';
+    buildKeyboard();   // 先に鍵盤を作って楽譜エリアの高さを確定させてから描画(はみ出し防止)
     renderScore();
-    buildKeyboard();
     updateUI();
     primeWaitOrGuide();
   }
@@ -295,6 +294,25 @@
     if (state.playMode === 'wait') { waitCtx = { steps: buildSteps(), i: 0 }; micReleased = true; if (!transport.playing) showStep(true); }
     else { clearHL(); }
   }
+  // 小節を手動移動（まつモードでも練習位置をその小節の先頭ステップに合わせる＝スナップバックしない）
+  function goToMeasure(mi) {
+    mi = Math.max(1, Math.min(state.song.measureCount, mi));
+    if (mi === state.measureIndex && state.view === 'measure') { /* それでも位置を合わせ直す */ }
+    state.measureIndex = mi;
+    stop();
+    if (state.view !== 'measure') { state.view = 'measure'; }
+    renderScore();
+    $('measureLabel').textContent = mi + ' / ' + state.song.measureCount;
+    updateUI();
+    if (state.playMode === 'wait') {
+      waitCtx = { steps: buildSteps(), i: 0 }; micReleased = true;
+      if (!state.loopMeasure) {
+        var bpm = state.song.beatsPerMeasure, target = (mi - 1) * bpm;
+        for (var k = 0; k < waitCtx.steps.length; k++) { if (waitCtx.steps[k].beat >= target - 1e-6) { waitCtx.i = k; break; } }
+      }
+      showStep(true);
+    } else { clearHL(); }
+  }
   function showStep(staticOnly) {
     if (!waitCtx) return;
     var st = waitCtx.steps[waitCtx.i];
@@ -460,8 +478,8 @@
 
     $('viewFull').addEventListener('click', function () { state.view = 'full'; stop(); renderScore(); updateUI(); });
     $('viewMeasure').addEventListener('click', function () { state.view = 'measure'; stop(); renderScore(); updateUI(); primeWaitOrGuide(); });
-    $('mPrev').addEventListener('click', function () { if (state.measureIndex > 1) { state.measureIndex--; stop(); renderScore(); updateUI(); primeWaitOrGuide(); } });
-    $('mNext').addEventListener('click', function () { if (state.measureIndex < state.song.measureCount) { state.measureIndex++; stop(); renderScore(); updateUI(); primeWaitOrGuide(); } });
+    $('mPrev').addEventListener('click', function () { goToMeasure(state.measureIndex - 1); });
+    $('mNext').addEventListener('click', function () { goToMeasure(state.measureIndex + 1); });
 
     // playMode
     $('pmDemo').addEventListener('click', function () { state.playMode = 'demo'; afterModeChange(); });
@@ -496,7 +514,7 @@
       $('prof_' + name).addEventListener('click', function () { applyProfile(name); });
     })(p);
 
-    global.addEventListener('resize', debounce(function () { stop(); renderScore(); var i = state.songIndex; buildKeyboard(); primeWaitOrGuide(); }, 250));
+    global.addEventListener('resize', debounce(function () { stop(); buildKeyboard(); renderScore(); primeWaitOrGuide(); }, 250));
   }
   function afterHandChange() { stop(); updateUI(); primeWaitOrGuide(); if (state.falling) kb.clearFalling(); }
   function afterModeChange() { stop(); updateUI(); primeWaitOrGuide(); }
