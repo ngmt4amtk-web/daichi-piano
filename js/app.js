@@ -64,6 +64,7 @@
   }
 
   function renderScore() {
+    $('score').classList.toggle('centered', state.view === 'measure');
     idx = DP.render.draw($('score'), state.song, {
       hands: state.hands, layers: state.layers, kana: state.kana,
       mode: state.view, measureIndex: state.measureIndex
@@ -74,7 +75,7 @@
     var r = computeRange(state.song);
     kb = DP.keyboard.create(host, {
       lo: r.lo, hi: r.hi, showNames: true, kbHeight: 130,
-      onPlay: function (midi) { if (state.playMode === 'wait') tryAdvanceByPitch(midi); }
+      onPlay: function (midi) { if (state.playMode === 'wait') tryAdvanceByTap(midi); }
     });
     kb.setFallingHeight(state.falling ? 150 : 0);
   }
@@ -253,17 +254,29 @@
     var sc = scope();
     var map = {};
     for (var i = 0; i < hs.length; i++) {
-      var ev = state.song[hs[i]];
+      var hand = hs[i];
+      var ev = state.song[hand];
       for (var n = 0; n < ev.length; n++) {
         var e = ev[n]; if (!e.midis.length) continue;
         if (e.startBeat < sc.start - 1e-6 || e.startBeat >= sc.end) continue;
         var kbk = e.startBeat.toFixed(3);
-        if (!map[kbk]) map[kbk] = { beat: e.startBeat, midis: [] };
+        if (!map[kbk]) map[kbk] = { beat: e.startBeat, midis: [], rh: [], lh: [] };
         map[kbk].midis = map[kbk].midis.concat(e.midis);
+        if (hand === 'RH') map[kbk].rh = map[kbk].rh.concat(e.midis);
+        else map[kbk].lh = map[kbk].lh.concat(e.midis);
       }
     }
     var steps = Object.keys(map).map(function (k) { return map[k]; });
     steps.sort(function (a, b) { return a.beat - b.beat; });
+    // ゲート: 旋律(右手)の単音を優先してピッチ判定。右手が無ければ左手。
+    // 和音(2音以上)はマイクで音程を当てられないので「鳴ればOK(オンセット)」。
+    steps.forEach(function (s) {
+      var gate = s.rh.length ? s.rh : s.lh;
+      var pcset = {};
+      gate.forEach(function (m) { pcset[((m % 12) + 12) % 12] = 1; });
+      s.gatePcs = Object.keys(pcset).map(Number);
+      s.gateMode = s.gatePcs.length === 1 ? 'pitch' : 'onset';
+    });
     return steps;
   }
 
@@ -271,6 +284,7 @@
     DP.audio.unlock();
     stop();
     waitCtx = { steps: buildSteps(), i: 0 };
+    micReleased = true;
     transport.playing = true;
     $('btnPlay').classList.add('playing');
     if (state.micOn) DP.pitch.start(onMicPitch);
@@ -278,7 +292,7 @@
   }
   function primeWaitOrGuide() {
     // 停止状態でも最初の音を提示しておく
-    if (state.playMode === 'wait') { waitCtx = { steps: buildSteps(), i: 0 }; if (!transport.playing) showStep(true); }
+    if (state.playMode === 'wait') { waitCtx = { steps: buildSteps(), i: 0 }; micReleased = true; if (!transport.playing) showStep(true); }
     else { clearHL(); }
   }
   function showStep(staticOnly) {
@@ -296,23 +310,37 @@
       if (mi !== state.measureIndex) { state.measureIndex = mi; renderScore(); DP.render.highlight(idx, function (ref) { return Math.abs(ref.startBeat - st.beat) < 1e-3 && practicingHands().indexOf(ref.hand) >= 0; }); $('measureLabel').textContent = state.measureIndex + ' / ' + state.song.measureCount; }
     }
   }
-  function expectedPCs() {
-    var st = waitCtx && waitCtx.steps[waitCtx.i]; if (!st) return [];
-    return st.midis.map(function (m) { return ((m % 12) + 12) % 12; });
-  }
-  function tryAdvanceByPitch(midi) {
+  // 画面鍵盤タップ/指タップ（離散イベント＝マイクのリリース判定は不要）
+  function tryAdvanceByTap(midi) {
     if (state.playMode !== 'wait' || !waitCtx || !waitCtx.armed) return;
+    var st = waitCtx.steps[waitCtx.i]; if (!st) return;
     var pc = ((midi % 12) + 12) % 12;
-    if (expectedPCs().indexOf(pc) >= 0) { waitCtx.armed = false; advanceStep(); }
+    if (st.gateMode === 'onset' || st.gatePcs.indexOf(pc) >= 0) { waitCtx.armed = false; advanceStep(); }
   }
-  var lastPitchMidi = null, pitchHold = 0;
-  function onMicPitch(midi) {
+  // マイク: 無音(指を離す)を挟むまで次を受け付けない＝一音一音区切る。
+  // 旋律(単音)はピッチ一致を要求。和音はオンセット(音が鳴った)で進む(音程は当てられない)。
+  var lastPitchMidi = null, pitchHold = 0, micReleased = true;
+  var SILENT_RMS = 0.02, LOUD_RMS = 0.05;
+  function onMicPitch(midi, freq, rms) {
+    rms = rms || 0;
     var b = $('btnMic');
-    if (midi == null) { lastPitchMidi = null; pitchHold = 0; if (b) b.classList.remove('listening'); return; }
+    if (rms < SILENT_RMS) { // 無音＝指を離した → 次の音を受け付け可能に
+      lastPitchMidi = null; pitchHold = 0; micReleased = true;
+      if (b) b.classList.remove('listening');
+      return;
+    }
     if (b) b.classList.add('listening');
-    if (midi === lastPitchMidi) { pitchHold++; } else { lastPitchMidi = midi; pitchHold = 1; }
-    if (pitchHold >= 2) tryAdvanceByPitch(midi); // 2フレーム安定で（armedが1ステップ1回を保証）
+    if (midi != null) { if (midi === lastPitchMidi) pitchHold++; else { lastPitchMidi = midi; pitchHold = 1; } }
+    if (rms < LOUD_RMS) return;                 // 小さい音は無視
+    if (state.playMode !== 'wait' || !waitCtx || !waitCtx.armed || !micReleased) return;
+    var st = waitCtx.steps[waitCtx.i]; if (!st) return;
+    if (st.gateMode === 'pitch') {
+      if (midi != null && pitchHold >= 2 && st.gatePcs.indexOf(((midi % 12) + 12) % 12) >= 0) commitAdvance();
+    } else { // 和音: 鳴ればOK
+      commitAdvance();
+    }
   }
+  function commitAdvance() { micReleased = false; waitCtx.armed = false; advanceStep(); }
   function setMic(on) {
     state.micOn = on;
     var b = $('btnMic');
@@ -489,7 +517,10 @@
     document.body.addEventListener('pointerdown', function once() { DP.audio.unlock(); document.body.removeEventListener('pointerdown', once); }, { once: true });
   }
 
-  DP.app = { init: init, state: state, _profiles: PROFILES };
+  DP.app = { init: init, state: state, _profiles: PROFILES,
+    _mic: function (m, f, r) { onMicPitch(m, f, r); },
+    _wi: function () { return waitCtx ? waitCtx.i : -1; },
+    _gate: function () { return waitCtx && waitCtx.steps[waitCtx.i] ? waitCtx.steps[waitCtx.i].gateMode : null; } };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();
 })(window);

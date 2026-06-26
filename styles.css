@@ -31,6 +31,7 @@ body{display:flex;flex-direction:column;}
 /* ステージ */
 .stage{flex:1;display:flex;flex-direction:column;min-height:0;padding:6px 10px;gap:4px;}
 .score{flex:1;min-height:0;overflow:auto;background:#fff;border:2px solid var(--line);border-radius:14px;padding:6px;}
+.score.centered{display:flex;align-items:center;justify-content:center;}
 .score-svg{display:block;}
 .keyboard{flex-shrink:0;}
 .kb-wrap{position:relative;}
@@ -44,15 +45,20 @@ body{display:flex;flex-direction:column;}
 .note{transition:none;}
 
 /* 子どもバー */
-.kidbar{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--panel-bg);
-  border-top:2px solid var(--line);overflow-x:auto;}
+.kidbar{display:flex;flex-direction:column;gap:8px;padding:8px 12px;background:var(--panel-bg);
+  border-top:2px solid var(--line);padding-bottom:calc(8px + env(safe-area-inset-bottom));}
+.kidbar-main{display:flex;align-items:stretch;gap:10px;}
+.kidbar-sub{display:flex;flex-wrap:wrap;align-items:center;gap:6px;}
 .kb-btn{min-width:76px;height:64px;border:2px solid var(--line);background:var(--btn);
   border-radius:14px;font-size:20px;font-weight:800;color:var(--ink);box-shadow:var(--shadow);
   cursor:pointer;flex-shrink:0;padding:0 14px;}
 .kb-btn:active{transform:translateY(1px);}
 .kb-btn.active{background:var(--btn-active);border-color:#e0b94a;}
-.kb-btn.big{min-width:96px;font-size:24px;}
-.kb-btn.play{background:#dff3e6;border-color:#9bd6b3;color:#0a7d4d;font-size:30px;}
+.kb-btn.big{min-width:96px;font-size:26px;height:70px;}
+/* 常用の特大ボタン（つぎ）＝押しやすい大きな標的 */
+.kb-btn.huge{flex:1;height:70px;font-size:28px;}
+.kb-btn.sm{min-width:60px;height:46px;font-size:15px;border-radius:11px;padding:0 12px;}
+.kb-btn.play{background:#dff3e6;border-color:#9bd6b3;color:#0a7d4d;font-size:32px;}
 .kb-btn.play.playing{background:#ffd9d9;border-color:#e58a8a;color:#b22;}
 .kb-btn.next{background:#e7f0fb;border-color:#a9c9ec;color:#1b75bc;}
 .kb-btn.hand{background:#f0ecf7;}
@@ -101,25 +107,23 @@ body{display:flex;flex-direction:column;}
 .reward-text{font-size:48px;font-weight:900;color:#e8202a;}
 .reward-sub{font-size:34px;margin-top:8px;}
 
-/* タブレット小〜スマホ: ボタンを折返して全部見せる */
+/* タブレット小〜スマホ: 常用(上段)は大きいまま・設定(下段)だけ縮める */
 @media (max-width:820px){
   .song-title{font-size:17px;}
   .copyright{display:none;}
   .stage{padding:4px 6px;}
-  .kidbar{flex-wrap:wrap;justify-content:center;gap:6px;padding:6px 8px;}
-  .kb-btn{min-width:58px;height:52px;font-size:16px;padding:0 10px;}
-  .kb-btn.big{min-width:78px;font-size:18px;}
-  .kb-btn.play{font-size:24px;}
-  .sep{display:none;}
+  .kb-btn.sm{min-width:54px;height:44px;font-size:14px;padding:0 10px;}
 }
 /* iPhone */
 @media (max-width:480px){
-  .kb-btn{min-width:52px;height:48px;font-size:15px;border-radius:11px;}
-  .kb-btn.big{min-width:66px;font-size:16px;}
+  .kb-btn.big{min-width:72px;height:62px;font-size:26px;}
+  .kb-btn.huge{height:62px;font-size:24px;}
+  .kb-btn.sm{min-width:48px;height:42px;font-size:13px;border-radius:10px;padding:0 8px;}
   .panel{width:100vw;}
   .reward-inner{padding:22px 34px;}
   .reward-text{font-size:36px;}
   .reward-sub{font-size:26px;}
   .kb-name{display:none;}
+  .measure-nav{font-size:15px;}
 }
 @media (prefers-reduced-motion: reduce){ *{transition:none !important;} }

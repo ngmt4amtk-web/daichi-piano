@@ -1,6 +1,6 @@
 /* sw.js — オフライン対応（ネットワーク優先・更新が必ず反映される）
  * 旧版: キャッシュ優先で更新が出ない問題 → v2でネットワーク優先に変更。 */
-var CACHE = 'daichi-piano-v2';
+var CACHE = 'daichi-piano-v3';
 var ASSETS = [
   './', './index.html', './styles.css', './manifest.webmanifest',
   './js/theory.js', './js/songs.js', './js/audio.js', './js/pitch.js',

@@ -42,9 +42,10 @@
   function loop() {
     if (!active) return;
     analyser.getFloatTimeDomainData(buf);
+    var rms = 0; for (var i = 0; i < buf.length; i++) rms += buf[i] * buf[i];
+    rms = Math.sqrt(rms / buf.length);
     var freq = autoCorrelate(buf, DP.audio.context.sampleRate);
-    if (freq > 0) cb && cb(freqToMidi(freq), freq);
-    else cb && cb(null, 0);
+    if (cb) cb(freq > 0 ? freqToMidi(freq) : null, freq > 0 ? freq : 0, rms);
     raf = requestAnimationFrame(loop);
   }
 
